@@ -1,0 +1,30 @@
+fastapi
+uvicorn
+transformers
+torch
+sentencepiece
+protobuf
+accelerate
+safetensors
+pydantic
+openai
+fastapi
+uvicorn
+openai
+python-dotenv
+rouge-score
+nltk
+pandas
+sacrebleu>=2.0.0
+rouge-score>=0.1.2
+bert-score>=0.3.13
+scipy>=1.10.0
+numpy>=1.24.0
+pandas>=2.0.0
+tqdm>=4.65.0
+openai>=1.0.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+unbabel-comet>=2.0.0  # optional, if you want COMET
+torch>=2.0.0  # required for bert-score and COMET
+transformers>=4.30.0
