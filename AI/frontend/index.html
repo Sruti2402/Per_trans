@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PerTrans • Research Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0b141a;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 1600px;
+            height: 92vh;
+            background: #0b141a;
+            border-radius: 32px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a3942;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #25d366;
+        }
+
+        .chat-box {
+            background: #0f1a20;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .message {
+            padding: 6px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 4px;
+        }
+
+        .message:hover {
+            background-color: rgba(37, 211, 102, 0.08);
+        }
+
+        .message.selected {
+            background-color: rgba(37, 211, 102, 0.2) !important;
+            box-shadow: 0 0 0 2px #25d366;
+        }
+
+        .message.context-highlight {
+            background-color: rgba(37, 211, 102, 0.08);
+            border-left: 3px solid #25d366;
+            padding-left: 10px;
+        }
+
+        .message-bubble {
+            background: #1f2a34;
+            border-radius: 14px;
+            padding: 16px 20px;
+            max-width: 88%;
+            transition: all 0.2s;
+        }
+
+        .message-bubble .sender {
+            color: #58b0e0;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .message-bubble .text {
+            color: #f0f2f5;
+            font-size: 0.98rem;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .output-box {
+            background: #131e26;
+            border-radius: 16px;
+            padding: 20px 22px;
+            min-height: 180px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .translation-item {
+            background: #0b141a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            border-left: 3px solid #25d366;
+        }
+
+        .translation-item .sender {
+            color: #58b0e0;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .translation-item .original {
+            color: #9aa3af;
+            font-size: 0.92rem;
+            margin: 3px 0;
+        }
+
+        .translation-item .translated {
+            color: #25d366;
+            font-size: 0.98rem;
+            font-weight: 500;
+        }
+
+        .summary-text {
+            line-height: 1.8;
+            color: #e5e7eb;
+            font-size: 0.98rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #25d366 0%, #128C7E 100%);
+            color: #000;
+            padding: 14px 36px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 56px;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(37, 211, 102, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0px);
+        }
+
+        .btn-primary i {
+            font-size: 1.1rem;
+        }
+
+        .btn-secondary {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 14px 30px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #374151;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 56px;
+        }
+
+        .btn-secondary:hover {
+            background: #2a3a47;
+            transform: translateY(-3px);
+            border-color: #4b5563;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary i {
+            font-size: 1.1rem;
+        }
+
+        .btn-evaluate {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: #fff;
+            padding: 18px 28px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 62px;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn-evaluate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-evaluate i {
+            font-size: 1.2rem;
+        }
+
+        select {
+            background: #1a252f;
+            color: #e5e7eb;
+            border: 1px solid #2a3942;
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            min-width: 160px;
+            transition: border-color 0.2s;
+            height: 48px;
+        }
+
+        select:focus {
+            border-color: #25d366;
+        }
+
+        select option {
+            background: #1a252f;
+            padding: 8px;
+        }
+
+        input[type="range"] {
+            height: 5px;
+            background: #2a3942;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            width: 100%;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #25d366;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(37, 211, 102, 0.4);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        input[type="text"] {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e5e7eb;
+            font-size: 0.98rem;
+            padding: 10px 6px;
+            width: 100%;
+        }
+
+        input[type="text"]::placeholder {
+            color: #6b7a8a;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-height: 36px;
+        }
+
+        .status-badge.success {
+            background: rgba(37, 211, 102, 0.15);
+            color: #25d366;
+        }
+
+        .status-badge.loading {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+
+        .status-badge.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: #25d366;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .label-sm {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #6b7a8a;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .metric-card {
+            background: #0b141a;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .metric-card .label {
+            color: #6b7a8a;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            font-weight: 600;
+        }
+
+        .metric-card .value {
+            color: #e5e7eb;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .message-counter {
+            font-size: 0.78rem;
+            color: #6b7a8a;
+            padding: 4px 16px;
+            background: #131e26;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 500;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+            margin-bottom: 12px;
+        }
+
+        .section-header .icon {
+            font-size: 1.1rem;
+        }
+
+        .section-header .sub {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: #6b7a8a;
+            margin-left: auto;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #25d366 0%, #128C7E 100%);
+            color: #000;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .chat-container {
+                height: 98vh;
+                border-radius: 20px;
+            }
+
+            .output-panel {
+                width: 400px !important;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                padding: 12px 24px;
+                font-size: 0.9rem;
+                min-height: 48px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+
+            .chat-container {
+                height: 100vh;
+                border-radius: 12px;
+            }
+
+            .output-panel {
+                width: 100% !important;
+                max-height: 50vh;
+            }
+
+            .flex-wrap {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                justify-content: center;
+                width: 100%;
+                padding: 14px 20px;
+            }
+
+            select {
+                width: 100%;
+                min-width: unset;
+            }
+
+            .btn-evaluate {
+                padding: 16px 20px;
+                min-height: 54px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-container">
+
+        <!-- HEADER -->
+        <div class="bg-[#1a252f] px-8 py-5 flex items-center gap-5 border-b border-[#2a3942] flex-shrink-0">
+            <div class="header-icon">PT</div>
+            <div class="flex-1">
+                <h1 class="title-font text-2xl font-bold text-white tracking-tight">PerTrans</h1>
+                <p class="text-[#6b7a8a] text-sm mt-0.5">Research Prototype • Context-Aware Translation</p>
+            </div>
+            <div id="statusIndicator">
+                <span class="status-badge success" id="statusBadge">
+                    <span class="w-2 h-2 rounded-full bg-[#25d366] inline-block mr-1"></span> Ready
+                </span>
+            </div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="bg-[#111b21] px-8 py-5 border-b border-[#2a3942] flex flex-wrap items-center gap-5 flex-shrink-0">
+            <div class="flex-1 min-w-[280px]">
+                <div
+                    class="flex items-center justify-between text-xs text-[#6b7a8a] font-bold uppercase tracking-wider mb-2">
+                    <span>Context Window</span>
+                    <span id="rangeDisplay" class="text-[#25d366] font-mono text-sm">5 messages</span>
+                </div>
+                <input type="range" id="contextSlider" min="2" max="20" value="5" class="w-full">
+                <div class="flex items-center justify-between mt-2">
+                    <span id="selectedInfo" class="text-[#25d366] text-sm font-semibold">No message selected</span>
+                    <span id="messageCount" class="message-counter">0 in context</span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                <div>
+                    <div class="label-sm">Target Language</div>
+                    <select id="languageSelect">
+                        <option value="Hindi">Hindi</option>
+                        <option value="English">English</option>
+                        <option value="Tamil" selected>Tamil</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="label-sm">Model</div>
+                    <select id="modelSelect">
+                        <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+                        <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+                        <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-3" style="margin-top: 18px;">
+                    <button onclick="translateSelected()" class="btn-primary">
+                        <i class="fa-solid fa-language"></i> Translate
+                    </button>
+                    <button onclick="summarizeSelected()" class="btn-secondary">
+                        <i class="fa-solid fa-file-lines"></i> Summarize
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex flex-1 overflow-hidden">
+
+            <!-- CHAT PANEL -->
+            <div class="flex-1 flex flex-col bg-[#0f1a20] border-r border-[#2a3942] min-w-0">
+                <div id="chatBox" class="chat-box flex-1 overflow-y-auto p-5 space-y-3"></div>
+                <div class="bg-[#1a252f] p-4 border-t border-[#2a3942] flex-shrink-0">
+                    <div class="bg-[#2a3942] rounded-3xl flex items-center px-6 py-1.5 gap-3">
+                        <input type="text" id="messageInput"
+                            class="flex-1 bg-transparent border-0 focus:outline-none text-white text-sm py-3"
+                            placeholder="Type a message to add..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button onclick="sendMessage()"
+                            class="w-11 h-11 bg-[#25d366] text-black rounded-2xl flex items-center justify-center hover:bg-[#128C7E] transition flex-shrink-0 text-base">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OUTPUT PANEL -->
+            <div class="w-[480px] bg-[#111b21] flex flex-col overflow-hidden flex-shrink-0 output-panel">
+                <div
+                    class="px-7 py-5 border-b border-[#2a3942] flex justify-between items-center flex-shrink-0 bg-[#111b21]">
+                    <h2 class="title-font text-xl font-bold text-white">Output</h2>
+                    <button onclick="clearOutputs()"
+                        class="text-[#6b7a8a] hover:text-white transition text-sm flex items-center gap-2 font-medium">
+                        <i class="fa-solid fa-eraser text-xs"></i> Clear
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+                    <!-- Translation -->
+                    <div>
+                        <div class="section-header">
+                            <span class="icon text-[#25d366]"><i class="fa-solid fa-language"></i></span>
+                            Translation
+                            <span id="translationStatus" class="sub"></span>
+                        </div>
+                        <div id="translationOutput" class="output-box">
+                            <p class="text-[#6b7a8a] text-sm">Select a message and click <span
+                                    class="text-[#25d366] font-semibold">Translate</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div>
+                        <div class="section-header">
+                            <span class="icon text-[#eab308]"><i class="fa-solid fa-file-lines"></i></span>
+                            Summary
+                            <span id="summaryStatus" class="sub"></span>
+                        </div>
+                        <div id="summaryOutput" class="output-box">
+                            <p class="text-[#6b7a8a] text-sm">Select a message and click <span
+                                    class="text-[#eab308] font-semibold">Summarize</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Evaluate Button -->
+                    <button onclick="openEvaluation()" class="btn-evaluate">
+                        <i class="fa-solid fa-chart-bar"></i> Evaluate Output
+                    </button>
+
+                    <!-- Metrics -->
+                    <div id="metricsSummary" class="hidden">
+                        <div
+                            class="text-xs font-bold text-[#6b7a8a] uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-gauge-high"></i> Performance Metrics
+                        </div>
+                        <div id="metricsDisplay" class="grid grid-cols-2 gap-3"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        let messagesData = [];
+        let selectedIndex = null;
+        let contextSize = 5;
+        let lastTranslation = null;
+        let lastSummary = null;
+        let lastMetrics = null;
+
+        const API_BASE = "http://127.0.0.1:8000";
+
+        // ===== LOAD MESSAGES =====
+        async function loadMessages() {
+            try {
+                const saved = localStorage.getItem('chatMessages');
+                if (saved) {
+                    messagesData = JSON.parse(saved);
+                } else {
+                    messagesData = [
+                        { sender: "Amit", text: "Hey everyone, what are we doing this weekend?" },
+                        { sender: "Neha", text: "I was thinking we could go to that new restaurant" },
+                        { sender: "Arun", text: "Great idea! Which one?" },
+                        { sender: "Priya", text: "The one near the beach, I've heard good reviews" },
+                        { sender: "Amit", text: "Perfect, let's meet at 7 PM on Saturday" },
+                        { sender: "Neha", text: "I'll book a table for 6 people" },
+                        { sender: "Arun", text: "Can we also plan for a movie after dinner?" },
+                        { sender: "Priya", text: "That sounds fun! I'll check what's playing" }
+                    ];
+                    saveMessages();
+                }
+            } catch (err) {
+                messagesData = [
+                    { sender: "Amit", text: "Hey everyone, what are we doing this weekend?" },
+                    { sender: "Neha", text: "I was thinking we could go to that new restaurant" }
+                ];
+                saveMessages();
+            }
+            renderMessages();
+            if (messagesData.length > 0) selectMessage(0);
+        }
+
+        function saveMessages() {
+            localStorage.setItem('chatMessages', JSON.stringify(messagesData));
+        }
+
+        // ===== RENDER CHAT =====
+        function renderMessages() {
+            const chatBox = document.getElementById("chatBox");
+            chatBox.innerHTML = "";
+            messagesData.forEach((msg, index) => {
+                const div = document.createElement("div");
+                div.className = `message flex`;
+                div.dataset.index = index;
+                div.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="sender">${msg.sender || 'User'}</div>
+                        <div class="text">${msg.text || ''}</div>
+                    </div>
+                `;
+                div.addEventListener("click", () => selectMessage(index));
+                chatBox.appendChild(div);
+            });
+            updateMessageCount();
+            if (selectedIndex !== null) highlightContextWindow();
+        }
+
+        // ===== SELECT =====
+        function selectMessage(index) {
+            selectedIndex = index;
+            highlightContextWindow();
+            document.getElementById("translationOutput").innerHTML =
+                '<p class="text-[#6b7a8a] text-sm">Select a message and click <span class="text-[#25d366] font-semibold">Translate</span></p>';
+            document.getElementById("summaryOutput").innerHTML =
+                '<p class="text-[#6b7a8a] text-sm">Select a message and click <span class="text-[#eab308] font-semibold">Summarize</span></p>';
+            document.getElementById("translationStatus").textContent = '';
+            document.getElementById("summaryStatus").textContent = '';
+            document.getElementById("metricsSummary").classList.add("hidden");
+            lastTranslation = null;
+            lastSummary = null;
+        }
+
+        // ===== HIGHLIGHT =====
+        function highlightContextWindow() {
+            document.querySelectorAll('.message').forEach(m => m.classList.remove('selected', 'context-highlight'));
+            if (selectedIndex === null) {
+                document.getElementById("selectedInfo").textContent = "No message selected";
+                updateMessageCount();
+                return;
+            }
+            const half = Math.floor(contextSize / 2);
+            let start = Math.max(0, selectedIndex - half);
+            let end = Math.min(messagesData.length - 1, selectedIndex + half);
+            while ((end - start + 1) < contextSize && start > 0) start--;
+            while ((end - start + 1) < contextSize && end < messagesData.length - 1) end++;
+
+            for (let i = start; i <= end; i++) {
+                const el = document.querySelector(`[data-index="${i}"]`);
+                if (el) {
+                    if (i === selectedIndex) el.classList.add('selected');
+                    else el.classList.add('context-highlight');
+                }
+            }
+            document.getElementById("selectedInfo").textContent = `Message #${selectedIndex + 1} • Context: ${start + 1}–${end + 1}`;
+            updateMessageCount();
+        }
+
+        function updateMessageCount() {
+            const count = getContextWindow().length;
+            document.getElementById("messageCount").textContent = `${count} in context`;
+        }
+
+        // ===== SLIDER =====
+        document.getElementById("contextSlider").addEventListener("input", (e) => {
+            contextSize = parseInt(e.target.value);
+            document.getElementById("rangeDisplay").textContent = `${contextSize} messages`;
+            if (selectedIndex !== null) highlightContextWindow();
+        });
+
+        // ===== GET CONTEXT =====
+        function getContextWindow() {
+            if (selectedIndex === null) return [];
+            const half = Math.floor(contextSize / 2);
+            let start = Math.max(0, selectedIndex - half);
+            let end = Math.min(messagesData.length - 1, selectedIndex + half);
+            while ((end - start + 1) < contextSize && start > 0) start--;
+            while ((end - start + 1) < contextSize && end < messagesData.length - 1) end++;
+            return messagesData.slice(start, end + 1);
+        }
+
+        // ===== STATUS =====
+        function setStatus(text, type = 'loading') {
+            const badge = document.getElementById('statusBadge');
+            const icons = {
+                loading: '<span class="loading-spinner"></span>',
+                success: '<span class="w-2 h-2 rounded-full bg-[#25d366] inline-block mr-1"></span>',
+                error: '<span class="w-2 h-2 rounded-full bg-[#ef4444] inline-block mr-1"></span>'
+            };
+            badge.innerHTML = `${icons[type] || icons.success} ${text}`;
+            badge.className = `status-badge ${type}`;
+        }
+
+        // ===== TRANSLATE =====
+        window.translateSelected = async () => {
+            if (selectedIndex === null) return alert("Please select a message first!");
+            const context = getContextWindow();
+            if (context.length === 0) return alert("No messages in context!");
+
+            const targetLanguage = document.getElementById("languageSelect").value;
+            const model = document.getElementById("modelSelect").value;
+            const output = document.getElementById("translationOutput");
+            const status = document.getElementById("translationStatus");
+
+            output.innerHTML = `<div class="flex items-center gap-3 text-[#25d366] text-sm">
+                <span class="loading-spinner"></span> Translating ${context.length} messages...
+            </div>`;
+            status.textContent = "Processing...";
+            setStatus("Translating...", "loading");
+
+            try {
+                const res = await fetch(`${API_BASE}/translate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        context_messages: context,
+                        target_language: targetLanguage,
+                        model: model
+                    })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+                if (!data.translations) throw new Error("Invalid response");
+
+                let html = "";
+                data.translations.forEach(t => {
+                    html += `
+                        <div class="translation-item">
+                            <div class="sender">${t.sender || 'User'}</div>
+                            <div class="original">${t.original || ''}</div>
+                            <div class="translated">→ ${t.translation || ''}</div>
+                            ${t.consistency_score ? `<div class="text-xs text-[#6b7a8a] mt-1">Consistency: ${t.consistency_score}%</div>` : ''}
+                        </div>
+                    `;
+                });
+
+                if (data.metrics) {
+                    lastMetrics = data.metrics;
+                    html += `
+                        <div class="mt-4 pt-3 border-t border-[#2a3942] grid grid-cols-2 gap-2 text-xs text-[#6b7a8a]">
+                            <div>Latency: ${data.metrics.latency_ms || 0}ms</div>
+                            <div>Cost: $${(data.metrics.total_cost || 0).toFixed(6)}</div>
+                            <div>Tokens: ${data.metrics.total_tokens || 0}</div>
+                            <div>Model: ${data.metrics.model || model}</div>
+                        </div>
+                    `;
+                }
+
+                output.innerHTML = html;
+                lastTranslation = data.translations;
+                status.textContent = `${data.translations.length} messages`;
+                setStatus("Ready", "success");
+                if (data.metrics) showMetrics(data.metrics);
+
+            } catch (e) {
+                output.innerHTML = `<p class="text-red-400 text-sm">Error: ${e.message}</p>`;
+                status.textContent = "Error";
+                setStatus("Error", "error");
+                console.error(e);
+            }
+        };
+
+        // ===== SUMMARIZE =====
+        window.summarizeSelected = async () => {
+            if (selectedIndex === null) return alert("Please select a message first!");
+            const context = getContextWindow();
+            if (context.length === 0) return alert("No messages in context!");
+
+            const model = document.getElementById("modelSelect").value;
+            const output = document.getElementById("summaryOutput");
+            const status = document.getElementById("summaryStatus");
+
+            output.innerHTML = `<div class="flex items-center gap-3 text-[#eab308] text-sm">
+                <span class="loading-spinner"></span> Summarizing ${context.length} messages...
+            </div>`;
+            status.textContent = "Processing...";
+            setStatus("Summarizing...", "loading");
+
+            try {
+                const res = await fetch(`${API_BASE}/summarize`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ context_messages: context, model: model })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+
+                let html = `<div class="summary-text">${data.summary}</div>`;
+                if (data.metrics) {
+                    html += `
+                        <div class="mt-4 pt-3 border-t border-[#2a3942] grid grid-cols-2 gap-2 text-xs text-[#6b7a8a]">
+                            <div>Latency: ${data.metrics.latency_ms || 0}ms</div>
+                            <div>Cost: $${(data.metrics.total_cost || 0).toFixed(6)}</div>
+                            <div>Tokens: ${data.metrics.total_tokens || 0}</div>
+                            <div>Length: ${data.metrics.length || 0} words</div>
+                        </div>
+                    `;
+                }
+                output.innerHTML = html;
+                lastSummary = data.summary;
+                status.textContent = "Complete";
+                setStatus("Ready", "success");
+                if (data.metrics) showMetrics(data.metrics);
+
+            } catch (e) {
+                output.innerHTML = `<p class="text-red-400 text-sm">Error: ${e.message}</p>`;
+                status.textContent = "Error";
+                setStatus("Error", "error");
+                console.error(e);
+            }
+        };
+
+        // ===== METRICS =====
+        function showMetrics(metrics) {
+            const container = document.getElementById('metricsSummary');
+            const display = document.getElementById('metricsDisplay');
+            container.classList.remove('hidden');
+            const items = [
+                ['Latency', `${metrics.latency_ms || 0}ms`],
+                ['Tokens', metrics.total_tokens || 0],
+                ['Cost', `$${(metrics.total_cost || 0).toFixed(6)}`],
+                ['Model', (metrics.model || 'N/A').split('/').pop()]
+            ];
+            display.innerHTML = items.map(([label, value]) => `
+                <div class="metric-card">
+                    <div class="label">${label}</div>
+                    <div class="value">${value}</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== CLEAR =====
+        window.clearOutputs = function () {
+            document.getElementById("translationOutput").innerHTML =
+                '<p class="text-[#6b7a8a] text-sm">Select a message and click <span class="text-[#25d366] font-semibold">Translate</span></p>';
+            document.getElementById("summaryOutput").innerHTML =
+                '<p class="text-[#6b7a8a] text-sm">Select a message and click <span class="text-[#eab308] font-semibold">Summarize</span></p>';
+            document.getElementById("translationStatus").textContent = '';
+            document.getElementById("summaryStatus").textContent = '';
+            document.getElementById("metricsSummary").classList.add("hidden");
+            lastTranslation = null;
+            lastSummary = null;
+            lastMetrics = null;
+        };
+
+        // ===== EVALUATE =====
+        window.openEvaluation = () => {
+            if (!lastTranslation || !lastSummary) {
+                alert("Please perform both Translation and Summary first!");
+                return;
+            }
+            const context = getContextWindow();
+            localStorage.setItem('context', JSON.stringify(context));
+            localStorage.setItem('translation', JSON.stringify(lastTranslation));
+            localStorage.setItem('summary', lastSummary);
+            localStorage.setItem('modelName', document.getElementById("modelSelect").value);
+            localStorage.setItem('targetLanguage', document.getElementById("languageSelect").value);
+            window.open('evaluate.html', '_blank');
+        };
+
+        // ===== SEND MESSAGE =====
+        function sendMessage() {
+            const input = document.getElementById("messageInput");
+            const text = input.value.trim();
+            if (text) {
+                messagesData.push({ sender: "You", text: text });
+                saveMessages();
+                renderMessages();
+                selectMessage(messagesData.length - 1);
+                input.value = "";
+                document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
+            }
+        }
+
+        // ===== KEYBOARD SHORTCUTS =====
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); translateSelected(); }
+            if (e.ctrlKey && e.shiftKey && e.key === 'Enter') { e.preventDefault(); summarizeSelected(); }
+        });
+
+        // ===== INIT =====
+        window.onload = loadMessages;
+    </script>
+
+</body>
+
+</html>
